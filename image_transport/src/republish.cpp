@@ -50,6 +50,23 @@ int main(int argc, char ** argv)
 
   auto node = rclcpp::Node::make_shared("image_republisher");
 
+  node->declare_parameter("qos", rclcpp::PARAMETER_INTEGER);
+  rclcpp::Parameter qos_param = node->get_parameter("qos");
+  int qos = qos_param.as_int();
+
+  rmw_qos_profile_t custom_qos;
+  if (qos==0) {
+    RCLCPP_INFO(
+    node->get_logger(),
+    "Using default reliable qos");
+    custom_qos = rmw_qos_profile_default;
+  } else if (qos==1) {
+    RCLCPP_INFO(
+    node->get_logger(),
+    "Using sensor data qos");
+    custom_qos = rmw_qos_profile_sensor_data;
+  }
+
   std::string in_topic = rclcpp::expand_topic_or_service_name(
     "in",
     node->get_name(), node->get_namespace());
@@ -70,7 +87,7 @@ int main(int argc, char ** argv)
 
     auto sub = image_transport::create_subscription(
       node.get(), in_topic,
-      std::bind(pub_mem_fn, &pub, std::placeholders::_1), in_transport);
+      std::bind(pub_mem_fn, &pub, std::placeholders::_1), in_transport, custom_qos);
     rclcpp::spin(node);
   } else {
     // Use one specific transport for output
@@ -90,7 +107,7 @@ int main(int argc, char ** argv)
     PublishMemFn pub_mem_fn = &Plugin::publishPtr;
     auto sub = image_transport::create_subscription(
       node.get(), in_topic,
-      std::bind(pub_mem_fn, pub.get(), std::placeholders::_1), in_transport);
+      std::bind(pub_mem_fn, pub.get(), std::placeholders::_1), in_transport, custom_qos);
     rclcpp::spin(node);
   }
 
