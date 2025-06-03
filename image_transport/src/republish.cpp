@@ -50,7 +50,7 @@ int main(int argc, char ** argv)
 
   auto node = rclcpp::Node::make_shared("image_republisher");
 
-  node->declare_parameter("qos", rclcpp::PARAMETER_INTEGER);
+  node->declare_parameter("qos", 1);
   rclcpp::Parameter qos_param = node->get_parameter("qos");
   int qos = qos_param.as_int();
 
